@@ -93,13 +93,69 @@ int main() {
           double v = j[1]["speed"];
 
           /*
-          * TODO: Calculate steering angle and throttle using MPC.
+          * Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
           double steer_value;
           double throttle_value;
+
+          for(int  i=0; i < ptsx.size(); ++i){
+
+              // move to origin and rotate around origin to align with axis
+              double shift_x = ptsx[i] - px;
+              double shift_y = ptsy[i] - py;
+
+              ptsx[i] = shift_x * cos(0-psi) - shift_y * sin(0-psi);
+              ptsy[i] = shift_x * sin(0-psi) + shift_y * cos(0-psi);
+
+          }
+          
+
+          double* ptrx = &ptsx[0];
+          Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, 6);
+
+          double* ptry = &ptsy[0];
+          Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, 6);
+
+          auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
+
+          // calculate cte and epsi
+          double cte = polyeval(coeffs, 0);
+
+          double epsi = -atan(coeffs[1]);
+
+          steer_value = j[1]["steering_angle"];
+          throttle_value = j[1]["throttle"];
+
+          Eigen::VectorXd state(6);
+
+          // take latency into account by solving the mpc for the position where the car will be later in time
+
+          // car reference system has been transformed in such a way that x, y, and psi are 0
+
+          double x_latency = 0 + v * cos(0) * latency_in_seconds; // x0 + v * cos(psi0) * dt
+          double y_latency = 0 + v * sin(0) * latency_in_seconds; // y0 + v * sin(psi0) * dt
+          double psi_latency = 0 - v * steer_value / Lf * latency_in_seconds; // psi0 - v * steer_value / Lf * dt
+
+          v += throttle_value * latency_in_seconds; // predicted v after dt
+
+          state << x_latency, y_latency, psi_latency, v, cte, epsi;
+
+          auto vars = mpc.Solve(state, coeffs);
+
+          //Display the MPC predicted trajectory 
+          vector<double> mpc_x_vals;
+          vector<double> mpc_y_vals;
+
+          for (int i = 2; i < vars.size(); i++) {
+            if (i%2 == 0) {
+              mpc_x_vals.push_back(vars[i]);
+            } else {
+              mpc_y_vals.push_back(vars[i]);
+            }
+          }
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
