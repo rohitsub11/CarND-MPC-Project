@@ -189,11 +189,7 @@ int main() {
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          //std::cout << msg << std::endl;
-          std::cout << v << "\t"
-                    << throttle_value << "\t"
-                    << steer_value << "\t"
-                    << v*v*steer_value/2.67 << std::endl;
+          std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
