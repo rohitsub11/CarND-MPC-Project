@@ -48,7 +48,6 @@ First of all, data about waypoints was transformed into the vehicle space and a 
 
 The time horizon (_T_) was chosen to 2 s after experiments. It was shown that the MPC could drive safely around the track with _T_ = 1 s, but on a slow speed. Higher speed requires more future information to make smart decisions in serial turns. Time step duration (_dt_) was set equal to the latancy of the simulation (0.03), hense, 30 time steps (_N_) was used.
 
-The cost function parameters were tuned by try-and-error method. All these parameters are stored in the `src/MPC.h` file. They were tuned in order to reach maximal speed and agressive race style with use of the whole width of the road and breaking before turns. 
 ---
 
 ## Dependencies
