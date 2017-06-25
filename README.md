@@ -1,6 +1,54 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+This is a turn-in project based on the Udacity [MPC Vehicle Control project](https://github.com/udacity/CarND-MPC-Project) 
+that is part of the self-driving car nanodegree program.  In order to be useful, you will 
+also need the Udacity [simulator](https://github.com/udacity/self-driving-car-sim/releases), 
+more particularly the version 1.2 simulator that includes the dual color point plotter. There is a 100 millisecond latency 
+between actuation commands on top of the connection latency.
+
+
+## General Concepts
+
+The basic idea of the MPC is to minimize a cost function associated with a kinematic model of a vehicle based on an 
+estimated trajectory. The MPC method can anticipate future events because we have an idea of what is probably gonna happen 
+if we do something. This is because we have a model of how things work in our world (like physics for example). We can 
+anticipate future events based on our current plan of action and also anticipate our next plan of action based on the 
+result of the current plan.
+
+## Model
+
+A simple Kinematic model (ignores tire forces, gravity, mass, etc) was used for the Controller. Some attempts to build more complicated dynamic model were made, but with low success. It is essential to know parameters of the vehicle (such as law of response on the throttle, geometry of the car, drag model, tires properties, etc) to construct a reasonable dynamic model but such parameters are not derectly accessible from provided materials for the project. 
+
+Position (_x,y_), heading (_ψ_) and velocity (_v_) form the vehicle state vector:
+
+State: _[x,y,ψ,v]_
+
+![State](images/state.png)
+
+There are two actuators. Stearing angle (_δ_) is the first one, it should be in range [-25,25] deg. For simplicity the throttle and brake represented as a singular actuator (_a_), with negative values signifying braking and positive values signifying acceleration. It should be in range [-1,1].
+
+Actuators: _[δ,a]_
+
+The kinematic model can predict the state on the next time step by taking into account the current state and actuators as follows:
+
+![Kinematic model](images/eq1.png)
+
+where _Lf_ measures the distance between the front of the vehicle and its center of gravity. The parameter was provided by Udacity.
+
+Errors: cross track error (_cte_) and _ψ_ error (_eψ_) were used to build the cost function for the MPC. They could be updated on a new time step using the following equations:
+
+![Erroers update model](images/eq2.png)
+
+## MPC
+
+One of the most important tasks was to tune parameters of the cost function and other parameters for the Model Predictive Controller.
+
+First of all, data about waypoints was transformed into the vehicle space and a 3d order polynomial was fitted to the data. Actual state of the vehicle was "shifted" into the future by 100 ms latency. It helps to reduce negative effects of the latency and increase stability of the controller. The latency was introduced to simulate real delay of a human driver or physical actuators in case of a self driving car. Cross track error and orientation error were calculated, is then they were passed into the MPC routine.
+
+The time horizon (_T_) was chosen to 2 s after experiments. It was shown that the MPC could drive safely around the track with _T_ = 1 s, but on a slow speed. Higher speed requires more future information to make smart decisions in serial turns. Time step duration (_dt_) was setted equal to the latancy of the simulation (0.1 s), hense, 20 time steps (_N_) was used.
+
+The cost function parameters were tuned by try-and-error method. All these parameters are stored in the `src/MPC.h` file. They were tuned in order to reach maximal speed and agressive race style with use of the whole width of the road and breaking before turns. 
 ---
 
 ## Dependencies
